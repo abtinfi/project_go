@@ -20,6 +20,7 @@ services:
       - "8080:8080"
     depends_on:
       - cassandra
+    restart: on-failure  # This will restart the app if Cassandra is not ready yet
     networks:
       - mynetwork
 
