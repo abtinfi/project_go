@@ -1,21 +1,25 @@
 # Dockerfile
+
+# Use the official lightweight Go image based on Alpine Linux.
 FROM golang:1.22-alpine
 
-# Set up the working directory
+# Set the Current Working Directory inside the container to /app
 WORKDIR /app
 
-# Enable Go modules (no need to set GOPATH for module-based builds)
-ENV GO111MODULE=on
-
-# Copy go.mod and go.sum first to cache dependency resolution
+# Copy go.mod and go.sum files to the workspace
 COPY go.mod go.sum ./
+
+# Download all dependencies
 RUN go mod download
 
-# Copy the rest of the application files
+# Copy the source code to the workspace
 COPY . .
 
-# Build the application
+# Build the Go app
 RUN go build -o app main.go
 
-# Command to run the application
-CMD ["./app"]
+# Expose port 8080
+EXPOSE 8080
+
+# Command to run when starting the container
+ENTRYPOINT ["./app"]

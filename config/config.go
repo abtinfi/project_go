@@ -1,54 +1,34 @@
 // config/config.go
-// config/config.go
 package config
 
 import (
-	"log"
-	"os"
-	"time"
-
 	"github.com/gocql/gocql"
-	"github.com/joho/godotenv"
+	"log"
+	"time"
 )
 
 var Session *gocql.Session
 
 func InitCassandra() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	var err error
 
-	cluster := gocql.NewCluster(os.Getenv("CASSANDRA_HOST"))
+	cluster := gocql.NewCluster("cassandra") // Use service name "cassandra"
+	cluster.Port = 9042
+	cluster.Keyspace = "your_keyspace" // Replace with your keyspace name
 	cluster.Consistency = gocql.Quorum
-	cluster.Keyspace = "system" // Temporarily connect to the system keyspace to create user_db if needed
+	cluster.ConnectTimeout = 10 * time.Second
+	cluster.RetryPolicy = &gocql.SimpleRetryPolicy{NumRetries: 5}
 
-	// Retry mechanism
-	for i := 0; i < 10; i++ {
+	for {
 		Session, err = cluster.CreateSession()
-		if err == nil {
-			break
+		if err != nil {
+			log.Printf("Unable to connect to Cassandra: %v. Retrying in 5 seconds...", err)
+			time.Sleep(5 * time.Second)
+			continue
 		}
-		log.Printf("Unable to connect to Cassandra: %v. Retrying in 5 seconds...", err)
-		time.Sleep(5 * time.Second)
+		break
 	}
-	if err != nil {
-		log.Fatal("Unable to connect to Cassandra after retries:", err)
-	}
-
-	// Create the keyspace if it doesn't exist
-	err = Session.Query(`CREATE KEYSPACE IF NOT EXISTS user_db WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}`).Exec()
-	if err != nil {
-		log.Fatal("Unable to create keyspace:", err)
-	}
-
-	// Close session and reconnect to the actual keyspace
-	Session.Close()
-	cluster.Keyspace = os.Getenv("CASSANDRA_KEYSPACE")
-	Session, err = cluster.CreateSession()
-	if err != nil {
-		log.Fatal("Unable to connect to Cassandra with keyspace:", err)
-	}
+	log.Println("Connected to Cassandra")
 }
 
 func CloseSession() {
