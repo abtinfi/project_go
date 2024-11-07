@@ -9,6 +9,10 @@ services:
       - cassandra
     networks:
       - app-network
+    environment:
+      # If your app connects to Cassandra, point it to cassandra:9042
+      CASSANDRA_HOST: cassandra
+      CASSANDRA_PORT: 9042
 
   cassandra:
     image: cassandra:latest

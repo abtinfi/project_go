@@ -4,7 +4,6 @@ go 1.22
 
 require (
 	github.com/gocql/gocql v1.7.0
-	github.com/joho/godotenv v1.5.1
 	github.com/kataras/iris/v12 v12.2.11
 )
 
